@@ -103,7 +103,7 @@ namespace FTDI
 		byte bitbang_mode;
 	
 		// misc
-		string error_str;
+		IntPtr error_str; /* const char * */
 	};
 	
 
@@ -147,8 +147,7 @@ namespace FTDI
 		}
 
 		public FTDIContext(int vendor, int product) : this() {
-			int ret = ftdi_usb_open(ref ftdi, vendor, product);
-			CheckRet(ret);
+			CheckRet(ftdi_usb_open(ref ftdi, vendor, product));
 		}
 
 		public FTDIContext(int vendor, int product, string description, string serial) : this() {
@@ -327,11 +326,11 @@ namespace FTDI
 		[DllImport("libftdi.so.0")] internal unsafe static extern int ftdi_usb_find_all(ref ftdi_context ftdi, ftdi_device_list **devlist, int vendor, int product);
 		[DllImport("libftdi.so.0")] internal unsafe static extern void ftdi_list_free(ftdi_device_list **devlist);
 
-		public static unsafe IntPtr[] GetDeviceList(int vendor, int product) {
+		public static unsafe IntPtr[] GetDeviceList(int vendor, int product) 
+		{
 			ArrayList ar = new ArrayList();
-			ftdi_context ftdi = new ftdi_context();
-
 			ftdi_device_list *devlist, d;
+			ftdi_context ftdi = new ftdi_context();
 			ftdi_init(ref ftdi);
 
 			CheckRet(ftdi_usb_find_all(ref ftdi, &devlist, vendor, product));
