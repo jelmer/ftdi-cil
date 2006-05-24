@@ -6,6 +6,7 @@
 //
 
 using System;
+using System.Collections;
 using System.Runtime.InteropServices;
 
 namespace FTDI 
@@ -15,7 +16,7 @@ namespace FTDI
 	enum StopBitsType { STOP_BIT_1=0, STOP_BIT_15=1, STOP_BIT_2=2 };
 	enum BitsType { BITS_7=7, BITS_8=8 };
 
-	enum MpsseMode {
+	enum MpsseMode : uint {
 	    BITMODE_RESET  = 0x00,
 	    BITMODE_BITBANG= 0x01,
 	    BITMODE_MPSSE  = 0x02,
@@ -25,7 +26,7 @@ namespace FTDI
 	};
 
 	/* Port interface code for FT2232C */
-	enum Interface {
+	enum Interface : uint {
 	    INTERFACE_ANY = 0,
 	    INTERFACE_A   = 1,
 	    INTERFACE_B   = 2
@@ -105,12 +106,9 @@ namespace FTDI
 		string error_str;
 	};
 	
-//	[StructLayout(LayoutKind.Sequential)] internal struct ftdi_device_list {
-//		ftdi_device_list *next;
-//		IntPtr dev;
-//	};
-	
-	[StructLayout(LayoutKind.Sequential)] internal struct ftdi_eeprom {
+
+	[StructLayout(LayoutKind.Sequential)] 
+	internal struct ftdi_eeprom {
 		// init and build eeprom from ftdi_eeprom structure
 		[DllImport("libftdi.so.0")] internal static extern int ftdi_eeprom_build(ref ftdi_eeprom eeprom, ref byte[] output);
 		[DllImport("libftdi.so.0")] internal static extern void ftdi_eeprom_initdefaults(out ftdi_eeprom eeprom);
@@ -158,6 +156,11 @@ namespace FTDI
 			CheckRet(ret);
 		}
 
+		[DllImport("libftdi.so.0")] internal static extern int ftdi_usb_open_dev(ref ftdi_context ftdi, IntPtr dev);
+		public FTDIContext(IntPtr dev) : this() {
+			CheckRet(ftdi_usb_open_dev(ref ftdi, dev));
+		}
+
 		~FTDIContext() {
 			ftdi_deinit(ref ftdi);
 		}
@@ -169,7 +172,7 @@ namespace FTDI
 			}
 		}
 
-		private void CheckRet(int ret) {
+		internal static void CheckRet(int ret) {
 			/* FIXME: Throw exception */
 		}
 
@@ -279,31 +282,72 @@ namespace FTDI
 		{
 			CheckRet(ftdi_write_data(ref ftdi, ref buf, size));
 		}
-	}
-	
-	internal class Native {
-		/* Value Low */
-		/* Value HIGH */ /*rate is 12000000/((1+value)*2) */
-		int DIV_VALUE(int rate) {
-			return (rate > 6000000)?0:((6000000/rate -1) > 0xffff)? 0xffff: (6000000/rate -1);
-		}
-		
-		[DllImport("libftdi.so.0")] internal static extern int ftdi_set_interface(ref ftdi_context ftdi, Interface iface);
-	
-	//	[DllImport("libftdi.so.0")] internal static extern void ftdi_set_usbdev (ftdi_context *ftdi, usb_dev_handle *usbdev);
-		
-//		[DllImport("libftdi.so.0")] internal static extern int ftdi_usb_find_all(ref ftdi_context ftdi, ftdi_device_list **devlist, int vendor, int product);
-//		[DllImport("libftdi.so.0")] internal static extern void ftdi_list_free(ftdi_device_list **devlist);
-		
-		[DllImport("libftdi.so.0")] internal static extern int ftdi_usb_open_dev(ref ftdi_context ftdi, IntPtr dev);
-		
-	
-		[DllImport("libftdi.so.0")] internal static extern int ftdi_set_line_property(ref ftdi_context ftdi, BitsType bits, StopBitsType sbit, ParityType parity);
 
-	
+		[DllImport("libftdi.so.0")] internal static extern int ftdi_set_interface(ref ftdi_context ftdi, Interface iface);
+		public Interface Interface { 
+			set {
+				CheckRet(ftdi_set_interface(ref ftdi, value));
+			}
+		}
+
+		[DllImport("libftdi.so.0")] internal static extern int ftdi_read_pins(ref ftdi_context ftdi, out byte pins);
+		public byte GetPins() {
+			byte pins;
+			CheckRet(ftdi_read_pins(ref ftdi, out pins));
+			return pins;
+		}
+
 		[DllImport("libftdi.so.0")] internal static extern int ftdi_enable_bitbang(ref ftdi_context ftdi, byte bitmask);
 		[DllImport("libftdi.so.0")] internal static extern int ftdi_disable_bitbang(ref ftdi_context ftdi);
+
+		public void EnableBitBang(byte bitmask) {
+			CheckRet(ftdi_enable_bitbang(ref ftdi, bitmask));
+		}
+
+		public void DisableBitBang() {
+			CheckRet(ftdi_disable_bitbang(ref ftdi));
+		}
+
 		[DllImport("libftdi.so.0")] internal static extern int ftdi_set_bitmode(ref ftdi_context ftdi, byte bitmask, byte mode);
-		[DllImport("libftdi.so.0")] internal static extern int ftdi_read_pins(ref ftdi_context ftdi, out byte pins);
+		public void SetBitMode(byte bitmask, byte mode) {
+			CheckRet(ftdi_set_bitmode(ref ftdi, bitmask, mode));
+		}
+
+		[DllImport("libftdi.so.0")] internal static extern int ftdi_set_line_property(ref ftdi_context ftdi, BitsType bits, StopBitsType sbit, ParityType parity);
+		public void SetLineProperty(BitsType bits, StopBitsType sbit, ParityType parity) {
+			CheckRet(ftdi_set_line_property(ref ftdi, bits, sbit, parity));
+		}
+
+		[StructLayout(LayoutKind.Sequential)] internal unsafe struct ftdi_device_list {
+	
+			internal ftdi_device_list *next;
+			internal IntPtr dev;
+		};
+
+		[DllImport("libftdi.so.0")] internal unsafe static extern int ftdi_usb_find_all(ref ftdi_context ftdi, out ftdi_device_list *devlist, int vendor, int product);
+		[DllImport("libftdi.so.0")] internal unsafe static extern void ftdi_list_free(ref ftdi_device_list *devlist);
+
+		static unsafe IntPtr[] GetDeviceList(int vendor, int product) {
+			ArrayList ar = new ArrayList();
+			ftdi_context ftdi = new ftdi_context();
+
+			ftdi_device_list *devlist, d;
+			ftdi_init(ref ftdi);
+
+			CheckRet(ftdi_usb_find_all(ref ftdi, out devlist, vendor, product));
+
+			for (d = devlist; d != null; d = d->next) {
+				ar.Add(d->dev);
+			}
+
+			ftdi_deinit(ref ftdi);
+
+			ftdi_list_free(ref devlist);
+
+			return (IntPtr[])ar.ToArray(typeof(IntPtr));
+		}
 	}
+		
+//		There is no wrapper for libusb at the moment, so this is pointless:
+//	[DllImport("libftdi.so.0")] internal unsafe static extern void ftdi_set_usbdev (ref ftdi_context ftdi, usb_dev_handle *usbdev);
 }
