@@ -7,4 +7,4 @@ Name: FTDI#
 Description: FTDI# - .NET Binding for the FTDI library.
 Version: 0.7
 Cflags: 
-Libs: -r:${libdir}/mono/ftdi/ftdi.dll
+Libs: -r:${libdir}/mono/ftdi/FTDI.dll
