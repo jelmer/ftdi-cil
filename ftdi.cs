@@ -11,10 +11,10 @@ using System.Runtime.InteropServices;
 
 namespace FTDI 
 {
-	enum ChipType { TYPE_AM=0, TYPE_BM=1, TYPE_2232C=2 };
-	enum ParityType { NONE=0, ODD=1, EVEN=2, MARK=3, SPACE=4 };
-	enum StopBitsType { STOP_BIT_1=0, STOP_BIT_15=1, STOP_BIT_2=2 };
-	enum BitsType { BITS_7=7, BITS_8=8 };
+	public enum ChipType { TYPE_AM=0, TYPE_BM=1, TYPE_2232C=2 };
+	public enum ParityType { NONE=0, ODD=1, EVEN=2, MARK=3, SPACE=4 };
+	public enum StopBitsType { STOP_BIT_1=0, STOP_BIT_15=1, STOP_BIT_2=2 };
+	public enum BitsType { BITS_7=7, BITS_8=8 };
 
 	enum MpsseMode : uint {
 	    BITMODE_RESET  = 0x00,
@@ -26,7 +26,7 @@ namespace FTDI
 	};
 
 	/* Port interface code for FT2232C */
-	enum Interface : uint {
+	public enum Interface : uint {
 	    INTERFACE_ANY = 0,
 	    INTERFACE_A   = 1,
 	    INTERFACE_B   = 2
@@ -108,7 +108,7 @@ namespace FTDI
 	
 
 	[StructLayout(LayoutKind.Sequential)] 
-	internal struct ftdi_eeprom {
+	public struct ftdi_eeprom {
 		// init and build eeprom from ftdi_eeprom structure
 		[DllImport("libftdi.so.0")] internal static extern int ftdi_eeprom_build(ref ftdi_eeprom eeprom, ref byte[] output);
 		[DllImport("libftdi.so.0")] internal static extern void ftdi_eeprom_initdefaults(out ftdi_eeprom eeprom);
@@ -134,7 +134,7 @@ namespace FTDI
 		string serial;
 	};
 
-	class FTDIContext {
+	public class FTDIContext {
 		private ftdi_context ftdi = new ftdi_context();
 
 		[DllImport("libftdi.so.0")] internal static extern int ftdi_init(ref ftdi_context ftdi);
@@ -324,17 +324,17 @@ namespace FTDI
 			internal IntPtr dev;
 		};
 
-		[DllImport("libftdi.so.0")] internal unsafe static extern int ftdi_usb_find_all(ref ftdi_context ftdi, out ftdi_device_list *devlist, int vendor, int product);
-		[DllImport("libftdi.so.0")] internal unsafe static extern void ftdi_list_free(ref ftdi_device_list *devlist);
+		[DllImport("libftdi.so.0")] internal unsafe static extern int ftdi_usb_find_all(ref ftdi_context ftdi, ftdi_device_list **devlist, int vendor, int product);
+		[DllImport("libftdi.so.0")] internal unsafe static extern void ftdi_list_free(ftdi_device_list **devlist);
 
-		static unsafe IntPtr[] GetDeviceList(int vendor, int product) {
+		public static unsafe IntPtr[] GetDeviceList(int vendor, int product) {
 			ArrayList ar = new ArrayList();
 			ftdi_context ftdi = new ftdi_context();
 
 			ftdi_device_list *devlist, d;
 			ftdi_init(ref ftdi);
 
-			CheckRet(ftdi_usb_find_all(ref ftdi, out devlist, vendor, product));
+			CheckRet(ftdi_usb_find_all(ref ftdi, &devlist, vendor, product));
 
 			for (d = devlist; d != null; d = d->next) {
 				ar.Add(d->dev);
@@ -342,7 +342,7 @@ namespace FTDI
 
 			ftdi_deinit(ref ftdi);
 
-			ftdi_list_free(ref devlist);
+			ftdi_list_free(&devlist);
 
 			return (IntPtr[])ar.ToArray(typeof(IntPtr));
 		}
