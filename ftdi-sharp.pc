@@ -1,0 +1,10 @@
+prefix=${pcfiledir}/../..
+exec_prefix=${prefix}
+libdir=${exec_prefix}/lib
+
+
+Name: FTDI#
+Description: FTDI# - .NET Binding for the FTDI library.
+Version: 0.7
+Cflags: 
+Libs: -r:${libdir}/mono/ftdi/ftdi.dll
