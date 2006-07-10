@@ -1,7 +1,8 @@
+prefix = /usr
 INSTALL = install
 MCS = mcs
 GACUTIL = gacutil
-prefix = /usr
+destdir = $(prefix)/lib/mono/ftdi
 
 all:: FTDI.dll ftdi-test.exe
 
@@ -13,6 +14,6 @@ ftdi-test.exe: ftdi-test.cs FTDI.dll
 
 install:: all
 	$(GACUTIL) -i FTDI.dll
-	$(INSTALL) -d $(prefix)/lib/ftdi
-	$(INSTALL) FTDI.dll $(prefix)/lib/ftdi	
+	$(INSTALL) -d $(destdir)
+	$(INSTALL) FTDI.dll $(destdir)
 	$(INSTALL) ftdi-sharp.pc $(prefix)/lib/pkgconfig
