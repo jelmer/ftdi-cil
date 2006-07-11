@@ -79,8 +79,8 @@ namespace FTDI
 	[StructLayout(LayoutKind.Sequential)] struct ftdi_context {
 		// USB specific
 		IntPtr usb_dev;
-		int usb_read_timeout;
-		int usb_write_timeout;
+		internal int usb_read_timeout;
+		internal int usb_write_timeout;
 	
 		// FTDI specific
 		ChipType type;
@@ -148,6 +148,16 @@ namespace FTDI
 
 		public FTDIContext(int vendor, int product) : this() {
 			CheckRet(ftdi_usb_open(ref ftdi, vendor, product));
+		}
+
+		public int ReadTimeout {
+			get { return ftdi.usb_read_timeout; }
+			set { ftdi.usb_read_timeout = value; }
+		}
+
+		public int WriteTimeout {
+			get { return ftdi.usb_write_timeout; }
+			set { ftdi.usb_write_timeout = value; }
 		}
 
 		public FTDIContext(int vendor, int product, string description, string serial) : this() {
