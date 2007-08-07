@@ -1,16 +1,16 @@
 prefix = /usr
 INSTALL = install
-MCS = mcs
+XBUILD = xbuild
 GACUTIL = gacutil
 destdir = $(prefix)/lib/mono/ftdi
 
 all:: FTDI.dll ftdi-test.exe
 
-FTDI.dll: ftdi.cs AssemblyInfo.cs
-	$(MCS) /unsafe /t:library /out:$@ $^
+FTDI.dll: ftdi-cil.csproj ftdi.cs AssemblyInfo.cs
+	$(XBUILD) ftdi-cil.csproj
 
-ftdi-test.exe: ftdi-test.cs FTDI.dll
-	$(MCS) /out:$@ /r:FTDI ftdi-test.cs
+ftdi-test.exe: ftdi-test.cs FTDI.dll ftdi-test.csproj
+	$(XBUILD) ftdi-test.csproj
 
 install:: all
 	$(GACUTIL) -i FTDI.dll

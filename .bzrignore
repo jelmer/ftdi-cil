@@ -1,1 +1,6 @@
 *.dll
+*.userprefs
+bin
+ftdi-test.exe
+*.pidb
+ftdi-cil.usertasks
