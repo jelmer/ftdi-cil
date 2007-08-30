@@ -8,6 +8,7 @@
 using System;
 using System.Collections;
 using System.Runtime.InteropServices;
+using System.IO;
 
 namespace FTDI 
 {
@@ -133,6 +134,58 @@ namespace FTDI
 		string product;
 		string serial;
 	};
+
+	public class FTDIStream : Stream {
+		private FTDIContext ftdi;
+
+		internal FTDIStream(FTDIContext ctx) {
+			this.ftdi = ctx;
+		}
+
+		public override void Flush ()
+		{
+		}
+		
+		public override int Read (byte[] buffer, int offset, int count)
+		{
+			byte[] ret = new byte[count];
+			int size = ftdi.ReadData(ret, ret.Length);
+			ret.CopyTo(buffer, offset);
+			return size;
+		}
+		
+		public override void SetLength (long value)
+		{
+			throw new NotSupportedException("SetLength not supported");
+		}
+
+		public override bool CanRead { get { return true; } }
+		public override bool CanSeek { get { return false; } }
+		public override bool CanWrite { get { return true; } } 
+
+		public override void Write(byte[] data, int offset, int length) 
+		{
+			if (offset != 0)
+				throw new NotSupportedException("offset not yet supported");
+			ftdi.WriteData(data, length);
+		}
+		
+		public override long Seek (long offset, SeekOrigin origin)
+		{
+			throw new NotSupportedException("Seek not supported");
+		}
+		
+		public override long Length {
+			get { throw new NotSupportedException("Length not supported"); }
+		}
+
+		public override long Position {
+			get { throw new NotSupportedException("Position not supported"); }
+			set { throw new NotSupportedException("Position not supported"); }
+		}
+
+
+	}
 
 	public class FTDIContext {
 		private ftdi_context ftdi = new ftdi_context();
@@ -358,6 +411,12 @@ namespace FTDI
 			ftdi_list_free(&devlist);
 
 			return (IntPtr[])ar.ToArray(typeof(IntPtr));
+		}
+
+		public FTDIStream BaseStream {
+			get { 
+				return new FTDIStream(this);
+			}
 		}
 	}
 		

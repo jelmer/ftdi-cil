@@ -7,7 +7,7 @@
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <OutputType>Library</OutputType>
     <AssemblyName>FTDI</AssemblyName>
-	<OutputPath>./bin/Debug/</OutputPath>
+    <OutputPath>./bin/Debug/</OutputPath>
     <DebugSymbols>True</DebugSymbols>
     <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
     <Optimize>True</Optimize>
